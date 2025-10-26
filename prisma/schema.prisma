@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  votes Vote[]
+  likes Like[]
+
+  @@map("users")
+}
+
+model Poll {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  options PollOption[]
+  votes   Vote[]
+  likes   Like[]
+
+  @@map("polls")
+}
+
+model PollOption {
+  id       String @id @default(cuid())
+  pollId   String
+  text     String
+  votes    Int    @default(0)
+
+  poll        Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  voteRecords Vote[] @relation("optionVotes")
+
+  @@map("poll_options")
+  @@index([pollId])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  pollId    String
+  optionId  String
+  userId    String?
+
+  createdAt DateTime @default(now())
+
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user   User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  option PollOption @relation("optionVotes", fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@map("votes")
+  @@index([pollId])
+}
+
+model Like {
+  id       String   @id @default(cuid())
+  pollId   String
+  userId   String?
+  createdAt DateTime @default(now())
+
+  poll Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([pollId, userId])
+  @@map("likes")
+  @@index([pollId])
+}
+

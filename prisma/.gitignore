@@ -1,0 +1,5 @@
+# Keep migrations but ignore certain files
+*.log
+.env
+.env.local
+
